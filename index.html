@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>РК4 - Тест</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+    <!-- Приветствие -->
+    <div id="start-screen">
+        <h1>Добро пожаловать!</h1>
+        <p>Нажмите кнопку, чтобы начать тест.</p>
+        <button id="start-btn" disabled>Загрузка...</button>
+    </div>
+
+    <!-- Экран теста -->
+    <div id="test-screen" style="display:none;">
+        <div class="top-row">
+            <h2 id="question-number"></h2>
+            <div id="timer">20:00</div>
+        </div>
+
+        <div id="question-text"></div>
+        <div id="answers" class="answers"></div>
+
+        <div class="controls">
+            <button id="next-btn">Далее</button>
+        </div>
+    </div>
+
+    <!-- Экран результата -->
+    <div id="result-screen" style="display:none;">
+        <h1>Результат</h1>
+        <div id="result"></div>
+        <button id="restart-btn">Начать заново</button>
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
