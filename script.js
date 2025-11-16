@@ -5,34 +5,46 @@ let score = 0;
 
 const TEST_COUNT = 30;
 const TIME_LIMIT = 20 * 60;
+
 let timeLeft = TIME_LIMIT;
 let timerInterval;
 
-// Массив ID вопросов, для которых есть картинки
-const questionsWithImages = [253, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 289, 290, 291, 292, 293, 295, 296, 300, 301, 302, 303, 304, 450, 451, 452, 453, 454, 456, 457, 460, 461, 463, 464, 465, 466, 468, 469, 470, 471, 473, 474, 476, 477, 506, 508, 509, 510, 511, 512, 513, 514, 515, 854, 856, 930, 931, 932, 933, 934, 935, 936, 937, 938, 939, 940];
+// вопросы с картинками
+const questionsWithImages = [
+  253,256,257,258,259,260,261,262,263,264,265,266,267,268,269,
+  270,271,272,274,275,276,277,278,279,280,281,282,283,284,285,
+  286,287,289,290,291,292,293,295,296,300,301,302,303,304,450,
+  451,452,453,454,456,457,460,461,463,464,465,466,468,469,470,
+  471,473,474,476,477,506,508,509,510,511,512,513,514,515,854,
+  856,930,931,932,933,934,935,936,937,938,939,940
+];
 
 // элементы
 const startBtn = document.getElementById("start-btn");
 const nextBtn = document.getElementById("next-btn");
 const restartBtn = document.getElementById("restart-btn");
+const exitBtn = document.getElementById("exit-btn");
+
 const questionNumberEl = document.getElementById("question-number");
 const questionTextEl = document.getElementById("question-text");
 const answersEl = document.getElementById("answers");
+
 const timerEl = document.getElementById("timer");
 const startScreen = document.getElementById("start-screen");
 const testScreen = document.getElementById("test-screen");
 const resultScreen = document.getElementById("result-screen");
 const resultDiv = document.getElementById("result");
 
-// Загрузка JSON
+// режимы
+const rangeFrom = document.getElementById("range-from");
+const rangeTo = document.getElementById("range-to");
+const rangeShuffle = document.getElementById("range-shuffle");
+
+// загрузка JSON
 fetch("questions.json")
-  .then(r => {
-    if (!r.ok) throw new Error("Не удалось загрузить questions.json");
-    return r.json();
-  })
+  .then(r => r.json())
   .then(data => {
     allQuestions = data;
-    console.log("Вопросов загружено:", allQuestions.length);
     startBtn.disabled = false;
     startBtn.textContent = "Начать тест";
   })
@@ -41,66 +53,94 @@ fetch("questions.json")
     startBtn.textContent = "Ошибка загрузки";
   });
 
-// старт
+// события
 startBtn.addEventListener("click", startTest);
-nextBtn.addEventListener("click", nextQuestion);
 restartBtn.addEventListener("click", startTest);
+nextBtn.addEventListener("click", nextQuestion);
 
+
+// ------------------------------------------------
+// Старт теста
+// ------------------------------------------------
 function startTest() {
-  if (!allQuestions || allQuestions.length === 0) {
-    alert("Вопросы ещё не загружены или отсутствуют.");
+  if (allQuestions.length === 0) {
+    alert("Вопросы не загружены");
     return;
   }
 
-  const count = Math.min(TEST_COUNT, allQuestions.length);
-  if (allQuestions.length < TEST_COUNT) {
-    console.warn(`Вопросов в базе меньше, чем TEST_COUNT. Используем ${count} вопросов.`);
+  const mode = document.querySelector("input[name='mode']:checked").value;
+
+  // режим: случайные 30
+  if (mode === "random") {
+    selectedQuestions = shuffle(allQuestions).slice(0, TEST_COUNT);
   }
 
-  selectedQuestions = shuffle(allQuestions).slice(0, count);
+  // режим: диапазон
+  else if (mode === "range") {
+    const from = parseInt(rangeFrom.value);
+    const to = parseInt(rangeTo.value);
+
+    if (isNaN(from) || isNaN(to) || from > to) {
+      alert("Укажите корректный диапазон ID");
+      return;
+    }
+
+    selectedQuestions = allQuestions.filter(q => q.id >= from && q.id <= to);
+
+    if (rangeShuffle.checked) {
+      selectedQuestions = shuffle(selectedQuestions);
+    }
+  }
+
+  if (selectedQuestions.length === 0) {
+    alert("Не найдено ни одного вопроса по условиям");
+    return;
+  }
+
   currentIndex = 0;
   score = 0;
   timeLeft = TIME_LIMIT;
 
   startScreen.style.display = "none";
-  resultScreen.style.display = "none";
   testScreen.style.display = "block";
+  resultScreen.style.display = "none";
 
   renderQuestion();
   startTimer();
 }
 
+
+// ------------------------------------------------
+// Отрисовка вопроса
+// ------------------------------------------------
 function renderQuestion() {
   const q = selectedQuestions[currentIndex];
-  if (!q) {
-    console.error("Попытка отобразить несуществующий вопрос, index:", currentIndex);
-    finishTest();
-    return;
-  }
 
-  questionNumberEl.innerText = `Вопрос ${currentIndex + 1} из ${selectedQuestions.length}`;
-  questionTextEl.innerText = q.question || "(вопрос пуст)";
+  questionNumberEl.innerText =
+    `Вопрос ${currentIndex + 1} из ${selectedQuestions.length} (№ ${q.id})`;
 
-  // удаляем старую подсказку о нескольких вариантах
+  questionTextEl.innerHTML = q.question;
+
+  // удалить старую подсказку
   const oldNote = document.getElementById("multi-note");
   if (oldNote) oldNote.remove();
 
-  // если правильных ответов >1 — добавляем красную подсказку
+  // множественный выбор — подсказка
   if (q.correct.length > 1) {
     const note = document.createElement("div");
     note.id = "multi-note";
     note.style.color = "red";
-    note.style.marginTop = "6px";
     note.style.fontWeight = "600";
+    note.style.marginTop = "6px";
     note.innerText = "Несколько правильных вариантов ответа";
     questionTextEl.appendChild(note);
   }
 
-  // удаляем старую картинку
+  // удалить старую картинку
   const oldImg = document.getElementById("question-image");
   if (oldImg) oldImg.remove();
 
-  // проверяем, есть ли картинка для этого вопроса
+  // добавить картинку
   if (questionsWithImages.includes(q.id)) {
     const img = document.createElement("img");
     img.id = "question-image";
@@ -111,6 +151,7 @@ function renderQuestion() {
     questionTextEl.appendChild(img);
   }
 
+  // ответы
   answersEl.innerHTML = "";
 
   q.answers.forEach((a, ai) => {
@@ -130,46 +171,52 @@ function renderQuestion() {
 
     label.addEventListener("click", () => {
       setTimeout(() => {
-        if (input.checked) label.classList.add("selected");
-        else label.classList.remove("selected");
+        label.classList.toggle("selected", input.checked);
       }, 0);
     });
 
     answersEl.appendChild(label);
   });
 
-  // кнопка подсказки
+  // Кнопка подсказки с нормальным выравниванием
   const hintBtn = document.createElement("button");
   hintBtn.innerText = "?";
-  hintBtn.style.marginTop = "12px";
-  hintBtn.style.background = "#facc15";
-  hintBtn.style.color = "#000";
-  hintBtn.style.fontWeight = "bold";
-  hintBtn.style.borderRadius = "50%";
-  hintBtn.style.width = "40px";
-  hintBtn.style.height = "40px";
-  hintBtn.style.padding = "0";
   hintBtn.title = "Показать правильный ответ";
+
+  Object.assign(hintBtn.style, {
+    marginTop: "12px",
+    background: "#facc15",
+    color: "#000",
+    fontWeight: "bold",
+    borderRadius: "50%",
+    width: "40px",
+    height: "40px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "20px",
+    cursor: "pointer"
+  });
 
   hintBtn.addEventListener("click", () => {
     const labels = answersEl.querySelectorAll(".option");
-    q.correct.forEach(ci => {
-      const lbl = labels[ci - 1];
-      if (lbl) {
-        lbl.style.background = "#4ade80"; // зелёная подсветка
-        lbl.style.borderColor = "#22c55e";
-      }
+    q.correct.forEach(index => {
+      labels[index - 1].style.background = "#4ade80";
     });
   });
 
   answersEl.appendChild(hintBtn);
 }
 
-function nextQuestion() {
-  const chosen = [...answersEl.querySelectorAll("input.answer:checked")]
-    .map(cb => parseInt(cb.value));
 
-  const correct = selectedQuestions[currentIndex].correct || [];
+// ------------------------------------------------
+// Следующий вопрос
+// ------------------------------------------------
+function nextQuestion() {
+  const chosen = [...answersEl.querySelectorAll(".answer:checked")]
+    .map(x => parseInt(x.value));
+
+  const correct = selectedQuestions[currentIndex].correct;
 
   if (arraysEqual(new Set(chosen), new Set(correct))) {
     score++;
@@ -185,6 +232,10 @@ function nextQuestion() {
   }
 }
 
+
+// ------------------------------------------------
+// Таймер
+// ------------------------------------------------
 function startTimer() {
   clearInterval(timerInterval);
   updateTimerDisplay();
@@ -193,10 +244,7 @@ function startTimer() {
     timeLeft--;
     updateTimerDisplay();
 
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-      finishTest();
-    }
+    if (timeLeft <= 0) finishTest();
   }, 1000);
 }
 
@@ -206,20 +254,29 @@ function updateTimerDisplay() {
   timerEl.innerText = `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+
+// ------------------------------------------------
+// Завершение
+// ------------------------------------------------
 function finishTest() {
   clearInterval(timerInterval);
+
   testScreen.style.display = "none";
   resultScreen.style.display = "block";
 
   const total = selectedQuestions.length;
   const percent = Math.round((score / total) * 100);
 
-  resultDiv.innerText = percent >= 60
-    ? `✅ Вы сдали! Результат: ${percent}% (${score} из ${total})`
-    : `❌ Вы не сдали. Результат: ${percent}% (${score} из ${total})`;
+  resultDiv.innerText =
+    percent >= 60
+      ? `✅ Вы сдали! ${percent}% (${score} из ${total})`
+      : `❌ Не сдали. ${percent}% (${score} из ${total})`;
 }
 
-// утилиты
+
+// ------------------------------------------------
+// Утилиты
+// ------------------------------------------------
 function shuffle(arr) {
   return arr.slice().sort(() => Math.random() - 0.5);
 }
@@ -229,3 +286,21 @@ function arraysEqual(a, b) {
   for (let x of a) if (!b.has(x)) return false;
   return true;
 }
+exitBtn.addEventListener("click", () => {
+    if (!confirm("Вы уверены, что хотите завершить тест?")) return;
+
+    // Сброс количества
+    currentIndex = 0;
+    selectedQuestions = [];
+    userAnswers = [];
+
+    // Показываем главный экран
+    document.getElementById("test-screen").style.display = "none";
+    document.getElementById("result-screen").style.display = "none";
+    document.getElementById("start-screen").style.display = "block";
+
+    // Останавливаем таймер
+    clearInterval(timerInterval);
+    timerInterval = null;
+    timerElement.textContent = "20:00";
+});

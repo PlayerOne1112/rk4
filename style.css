@@ -119,3 +119,63 @@ button[disabled] { opacity:.6; cursor:default; }
   button { width:100%; }
   .controls { padding:0 0 12px 0; }
 }
+/* --- карточки выбора режима и диапазона --- */
+.mode-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin: 12px 0;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+}
+
+.mode-card h3 {
+    margin: 0 0 10px 0;
+}
+
+.mode-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+.mode-option input[type="radio"],
+.mode-option input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--accent);
+}
+
+.range-inputs {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.range-inputs input {
+    padding: 8px 10px;
+    font-size: 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    width: 120px;
+}
+
+.range-inputs input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+}
+.exit-btn {
+    background: #ef4444; /* красная кнопка */
+}
+
+.exit-btn:hover {
+    background: #dc2626;
+}
+.controls{
+    gap: 10px;
+}

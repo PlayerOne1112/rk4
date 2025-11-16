@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>РК4 - Тест</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -14,7 +14,32 @@
     <div id="start-screen">
         <h1>Добро пожаловать!</h1>
         <p>Нажмите кнопку, чтобы начать тест.</p>
-        <button id="start-btn" disabled>Загрузка...</button>
+
+        <div class="mode-card">
+            <h3>Выбор режима</h3>
+
+            <label class="mode-option">
+                <input type="radio" name="mode" value="random" checked>
+                <span>Случайные вопросы (30 шт.)</span>
+            </label>
+
+            <label class="mode-option">
+                <input type="radio" name="mode" value="range">
+                <span>По диапазону</span>
+            </label>
+
+            <div class="range-inputs">
+                <input id="range-from" type="number" placeholder="От №">
+                <input id="range-to" type="number" placeholder="До №">
+            </div>
+
+            <label class="mode-option" style="margin-top: 10px;">
+                <input type="checkbox" id="range-shuffle" checked>
+                <span>Перемешать</span>
+            </label>
+        
+        </div>
+                <button id="start-btn" disabled>Загрузка...</button>
     </div>
 
     <!-- Экран теста -->
@@ -28,6 +53,7 @@
         <div id="answers" class="answers"></div>
 
         <div class="controls">
+            <button id="exit-btn" class="exit-btn">Завершить</button>
             <button id="next-btn">Далее</button>
         </div>
     </div>
